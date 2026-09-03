@@ -23,8 +23,11 @@ Mycelium exposes a single interface for benchmark-conditioned span metrics.
 
 | Dictionary key | Metric | Default profile aggregation | Provenance |
 |---|---|---|---|
+| `exact_span` | Exact instance precision, recall, and F1 | Mu-SHROOM: macro; RAGTruth: micro | Standard strict span baseline |
 | `iou` | Character intersection-over-union | Mu-SHROOM: macro | Reproduces the released Mu-SHROOM participant-kit scorer |
 | `character` | Character-mask precision, recall, and F1 | RAGTruth: micro | Independent reconstruction from the RAGTruth paper description\* |
+| `deteval_1d` | Split/merge-aware detection precision, recall, and F1 | Mu-SHROOM: macro; RAGTruth: micro | Mycelium 1D adaptation of DetEval\*\* |
+| `cleval_1d` | Character-coverage precision, recall, and F1 with granularity penalties | Mu-SHROOM: macro; RAGTruth: micro | Mycelium 1D adaptation of CLEval\*\* |
 | `span_coverage` | Directional Span Coverage precision, recall, and F1 | Mu-SHROOM: macro; RAGTruth: micro | Proposed in Mycelium |
 
 \*RAGTruth states that span overlap is evaluated with character-level
@@ -35,6 +38,13 @@ the batch. Undefined precision or recall is set to `0.0`, equivalent to
 `zero_division=0`. This implementation is not claimed to be official. See the
 [RAGTruth paper](https://aclanthology.org/2024.acl-long.585/) and
 [repository](https://github.com/ParticleMedia/RAGTruth).
+
+\*\*`deteval_1d` and `cleval_1d` replace two-dimensional text-detection
+regions with half-open character intervals. They are Mycelium adaptations, not
+official metrics released by Mu-SHROOM or RAGTruth. Their defaults follow the
+paper experiments: DetEval recall threshold `0.8`, precision threshold `0.4`,
+and split/merge credit `0.8`; CLEval area-precision threshold `0.3` and
+granularity-penalty weight `1.0`.
 
 The default report includes every available metric:
 
@@ -50,8 +60,11 @@ report = evaluate(
 
 print(report)
 # {
+#   "exact_span": {"precision": 0.0, "recall": 0.0, "f1": 0.0},
 #   "iou": {"score": 0.6},
 #   "character": {"precision": 1.0, "recall": 0.6, "f1": 0.75},
+#   "deteval_1d": {"precision": 0.0, "recall": 0.0, "f1": 0.0},
+#   "cleval_1d": {"precision": 1.0, "recall": 0.6, "f1": 0.75},
 #   "span_coverage": {"precision": 1.0, "recall": 1.0, "f1": 1.0},
 #   "meta": {
 #     "examples": 1,

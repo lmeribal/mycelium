@@ -10,10 +10,24 @@ from ._spans import (
     normalize_text_lengths,
     validate_bounds,
 )
-from .metrics import character, iou, span_coverage
+from .metrics import (
+    character,
+    cleval_1d,
+    deteval_1d,
+    exact_span,
+    iou,
+    span_coverage,
+)
 
 
-AVAILABLE_METRICS = ("iou", "character", "span_coverage")
+AVAILABLE_METRICS = (
+    "exact_span",
+    "iou",
+    "character",
+    "deteval_1d",
+    "cleval_1d",
+    "span_coverage",
+)
 SUPPORTED_PROFILES = ("mu_shroom", "mu-shroom", "mushroom", "ragtruth")
 PROFILE_DEFAULT_AVERAGES = {
     "mu_shroom": "macro",
@@ -34,6 +48,11 @@ def evaluate(
     include_per_example: bool = False,
     span_coverage_delta: int = 0,
     span_coverage_min_pred_len: int = 1,
+    deteval_recall_threshold: float = 0.8,
+    deteval_precision_threshold: float = 0.4,
+    deteval_granularity_penalty: float = 0.8,
+    cleval_area_precision_threshold: float = 0.3,
+    cleval_granularity_penalty: float = 1.0,
     empty_is_perfect: bool = True,
 ) -> Dict[str, object]:
     """Evaluate hallucination spans with every applicable Mycelium metric.
@@ -78,6 +97,13 @@ def evaluate(
         )
 
     report: Dict[str, object] = {}
+    if "exact_span" in selected:
+        report["exact_span"] = exact_span(
+            reference_batch,
+            prediction_batch,
+            average=resolved_average,
+            include_per_example=include_per_example,
+        )
     if "iou" in selected:
         report["iou"] = iou(
             reference_batch,
@@ -90,6 +116,25 @@ def evaluate(
             reference_batch,
             prediction_batch,
             average=resolved_average,
+            include_per_example=include_per_example,
+        )
+    if "deteval_1d" in selected:
+        report["deteval_1d"] = deteval_1d(
+            reference_batch,
+            prediction_batch,
+            average=resolved_average,
+            recall_threshold=deteval_recall_threshold,
+            precision_threshold=deteval_precision_threshold,
+            granularity_penalty=deteval_granularity_penalty,
+            include_per_example=include_per_example,
+        )
+    if "cleval_1d" in selected:
+        report["cleval_1d"] = cleval_1d(
+            reference_batch,
+            prediction_batch,
+            average=resolved_average,
+            area_precision_threshold=cleval_area_precision_threshold,
+            granularity_penalty_weight=cleval_granularity_penalty,
             include_per_example=include_per_example,
         )
     if "span_coverage" in selected:
